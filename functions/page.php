@@ -13,6 +13,11 @@ function custom_page_display()
 			page_display_about();
 			return TRUE;
 		}
+		else if(!strcmp($_GET['p'],"my_playlists"))
+		{
+			playlist_display_index();
+			return TRUE;
+		}
 		else if(!strcmp($_GET['p'],"users"))
 		{
 			if(isset($_GET['s']))

@@ -1,4 +1,4 @@
-a:23:{i:0;a:2:{s:5:"Table";s:10:"access_log";s:12:"Create Table";s:667:"
+a:26:{i:0;a:2:{s:5:"Table";s:10:"access_log";s:12:"Create Table";s:667:"
 CREATE TABLE IF NOT EXISTS `access_log` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -121,7 +121,22 @@ CREATE TABLE IF NOT EXISTS `notice` (
   `message` text COLLATE utf8_bin,
   `closed` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:12;a:2:{s:5:"Table";s:7:"plusone";s:12:"Create Table";s:391:"
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:12;a:2:{s:5:"Table";s:8:"playlist";s:12:"Create Table";s:316:"
+CREATE TABLE IF NOT EXISTS `playlist` (
+  `id` int(11) NOT NULL,
+  `created` datetime NOT NULL,
+  `updated` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `user` int(11) NOT NULL,
+  `name` text COLLATE utf8_bin,
+  `description` text COLLATE utf8_bin
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:13;a:2:{s:5:"Table";s:19:"playlist_track_reff";s:12:"Create Table";s:265:"
+CREATE TABLE IF NOT EXISTS `playlist_track_reff` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `playlist` int(11) NOT NULL,
+  `track` int(11) NOT NULL,
+  `order` int(11) NOT NULL DEFAULT '1',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:14;a:2:{s:5:"Table";s:7:"plusone";s:12:"Create Table";s:391:"
 CREATE TABLE IF NOT EXISTS `plusone` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `typ` varchar(64) CHARACTER SET latin1 DEFAULT NULL,
@@ -130,7 +145,7 @@ CREATE TABLE IF NOT EXISTS `plusone` (
   `added` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `deleted` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:13;a:2:{s:5:"Table";s:8:"privmess";s:12:"Create Table";s:417:"
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:15;a:2:{s:5:"Table";s:8:"privmess";s:12:"Create Table";s:417:"
 CREATE TABLE IF NOT EXISTS `privmess` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `sender` int(11) NOT NULL,
@@ -141,7 +156,7 @@ CREATE TABLE IF NOT EXISTS `privmess` (
   `opened` datetime DEFAULT NULL,
   `deleted` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:14;a:2:{s:5:"Table";s:4:"spam";s:12:"Create Table";s:310:"
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:16;a:2:{s:5:"Table";s:4:"spam";s:12:"Create Table";s:310:"
 CREATE TABLE IF NOT EXISTS `spam` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `type` varchar(32) COLLATE utf8_bin NOT NULL,
@@ -149,7 +164,17 @@ CREATE TABLE IF NOT EXISTS `spam` (
   `user` int(11) DEFAULT NULL,
   `IP` varchar(32) COLLATE utf8_bin DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:15;a:2:{s:5:"Table";s:4:"user";s:12:"Create Table";s:786:"
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:17;a:2:{s:5:"Table";s:5:"track";s:12:"Create Table";s:414:"
+CREATE TABLE IF NOT EXISTS `track` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `providerId` varchar(64) COLLATE utf8_bin NOT NULL,
+  `provider` varchar(64) COLLATE utf8_bin NOT NULL,
+  `duration` int(11) NOT NULL,
+  `title` text COLLATE utf8_bin NOT NULL,
+  `artist` text COLLATE utf8_bin NOT NULL,
+  `url` text COLLATE utf8_bin NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:18;a:2:{s:5:"Table";s:4:"user";s:12:"Create Table";s:786:"
 CREATE TABLE IF NOT EXISTS `user` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `regdate` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -164,7 +189,7 @@ CREATE TABLE IF NOT EXISTS `user` (
   `blocked` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:16;a:2:{s:5:"Table";s:11:"user_friend";s:12:"Create Table";s:530:"
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:19;a:2:{s:5:"Table";s:11:"user_friend";s:12:"Create Table";s:530:"
 CREATE TABLE IF NOT EXISTS `user_friend` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `request_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -173,7 +198,7 @@ CREATE TABLE IF NOT EXISTS `user_friend` (
   `status` enum('NEW','ACCEPTED','REJECTED') COLLATE utf8_bin NOT NULL DEFAULT 'NEW',
   PRIMARY KEY (`id`),
   UNIQUE KEY `user_friend_relation` (`requested_by`,`user`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:17;a:2:{s:5:"Table";s:19:"user_friend_history";s:12:"Create Table";s:612:"
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:20;a:2:{s:5:"Table";s:19:"user_friend_history";s:12:"Create Table";s:612:"
 CREATE TABLE IF NOT EXISTS `user_friend_history` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `operation` enum('UPDATE','DELETE') COLLATE utf8_bin NOT NULL,
@@ -184,7 +209,7 @@ CREATE TABLE IF NOT EXISTS `user_friend_history` (
   `user` int(11) NOT NULL COMMENT 'the user the first user wants to be friends with',
   `status` enum('NEW','ACCEPTED','REJECTED') COLLATE utf8_bin NOT NULL DEFAULT 'NEW',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:18;a:2:{s:5:"Table";s:15:"user_oauth_reff";s:12:"Create Table";s:561:"
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:21;a:2:{s:5:"Table";s:15:"user_oauth_reff";s:12:"Create Table";s:561:"
 CREATE TABLE IF NOT EXISTS `user_oauth_reff` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user` int(11) NOT NULL,
@@ -196,7 +221,7 @@ CREATE TABLE IF NOT EXISTS `user_oauth_reff` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `user_2` (`user`,`oauth_name`),
   KEY `user` (`user`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:19;a:2:{s:5:"Table";s:15:"user_reset_code";s:12:"Create Table";s:360:"
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:22;a:2:{s:5:"Table";s:15:"user_reset_code";s:12:"Create Table";s:360:"
 CREATE TABLE IF NOT EXISTS `user_reset_code` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user` int(11) NOT NULL,
@@ -205,19 +230,19 @@ CREATE TABLE IF NOT EXISTS `user_reset_code` (
   `used` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `reset_code_customer` (`user`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:20;a:2:{s:5:"Table";s:12:"user_setting";s:12:"Create Table";s:225:"
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:23;a:2:{s:5:"Table";s:12:"user_setting";s:12:"Create Table";s:225:"
 CREATE TABLE IF NOT EXISTS `user_setting` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `user_id` int(11) NOT NULL,
   `settings` text COLLATE utf8_bin,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:21;a:2:{s:5:"Table";s:7:"version";s:12:"Create Table";s:297:"
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:24;a:2:{s:5:"Table";s:7:"version";s:12:"Create Table";s:297:"
 CREATE TABLE IF NOT EXISTS `version` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `version` float DEFAULT NULL COMMENT 'version',
   `time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'när det blev denna version',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:22;a:2:{s:5:"Table";s:12:"version_done";s:12:"Create Table";s:521:"
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_bin";}i:25;a:2:{s:5:"Table";s:12:"version_done";s:12:"Create Table";s:521:"
 CREATE TABLE IF NOT EXISTS `version_done` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `version` int(11) DEFAULT NULL COMMENT 'om null så är saken färdig, men version har inte ökat sen dess',

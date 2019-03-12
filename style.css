@@ -4,3 +4,8 @@
 	background: url("img/White-christmas-light-background.jpg") no-repeat fixed center center / cover;
 }
 
+.scrollbox
+{
+	height: 20em;
+	overflow-x: auto;
+}
