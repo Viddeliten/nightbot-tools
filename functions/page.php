@@ -13,6 +13,14 @@ function custom_page_display()
 			page_display_about();
 			return TRUE;
 		}
+		else if(!strcmp($_GET['p'],"playlist"))
+		{
+			if(isset($_GET['s']) && isset($_GET['id'])) // in_array(strtolower($_GET['s']),array("edit","view")))
+			{
+				playlist_display_single((int) $_GET['id'], (!strcmp(strtolower($_GET['s']),"edit") ? TRUE : FALSE));
+				return TRUE;
+			}
+		}
 		else if(!strcmp($_GET['p'],"my_playlists"))
 		{
 			playlist_display_index();

@@ -42,5 +42,29 @@ function track_get_id_from_url($url)
 		return $track['id'];
 	return FALSE;
 }
+function track_get_all_from_playlist($playlist_id, $checkboxes=FALSE)
+{
+	$db=new db_class();
+	$result = $db->select("SELECT track.* 
+		FROM ".PREFIX."playlist_track_reff reff
+		INNER JOIN ".TRACK_TABLE." ON ".TRACK_TABLE.".id=reff.track
+		WHERE reff.playlist=".sql_safe($playlist_id).";");
+	if($checkboxes)
+	{
+		$return=array();
+		foreach($result as $r)
+		{
+			$temp=array();
+			$temp["select"]=html_form_checkbox(NULL, "track_".$r['id']."_checkbox", "tracks[".$r['id']."]", NULL, FALSE, NULL, FALSE);
+			foreach($r as $key => $val)
+			{
+				$temp[$key]=$val;
+			}
+			$return[]=$temp;
+		}
+		return $return;
+	}
+	return $result;
+}
 
 ?>

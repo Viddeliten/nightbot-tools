@@ -12,6 +12,12 @@ function playlist_display_index()
 	echo playlist_html_saved();
 }
 
+function playlist_display_single($playlist_id, $editmode=FALSE)
+{
+	$playlist=playlist_get($playlist_id);
+	echo playlist_html_single($playlist, ($editmode ? "edit" : "single"));
+}
+
 function playlist_html_current()
 {
 	// Get the playlist for the current logged in user
@@ -26,6 +32,14 @@ function playlist_html_current()
 	// Droplist for extracting to new or existing playlist
 	$html.=html_tag("h3",_("Extract current playlist"));
 
+	$inputs[]=playlist_droplist("move_to", _("Move all songs to"));
+	$inputs[]=html_form_button("extract_current_nightbot_playlist", _("Extract"), "submit", NULL, FALSe, TRUE);
+	$html.=html_form("post", $inputs, FALSE, TRUE);
+	return $html;
+}
+
+function playlist_droplist($input_name, $input_label)
+{
 	$inputs=array();
 	$options["NEW_PLAYLIST"]=sprintf("-- %s --", _("New playlist"));
 	$playlists=playlist_get_users_playlists();
@@ -35,11 +49,9 @@ function playlist_html_current()
 			$pl['name']=sprintf(_("Playlist %s"), $pl['id']);
 		$options[$pl['id']]=$pl['name'];
 	}
-	$inputs[]=html_form_droplist("move_to_droplist", _("Move all songs to"), "move_to", $options);
-	$inputs[]=html_form_button("extract_current_nightbot_playlist", _("Extract"), "submit", NULL, FALSe, TRUE);
-	$html.=html_form("post", $inputs, FALSE, TRUE);
-	return $html;
+	return html_form_droplist($input_name."_droplist", $input_label, $input_name, $options);
 }
+
 
 function playlist_html_saved()
 {
@@ -52,15 +64,51 @@ function playlist_html_saved()
 		return $html;
 	}
 	
-	// TODO: list them here
-	
+	// List all saved playlists
 	foreach($playlists as $playlist)
 	{
-		$html.=prestr($playlist);
+		$html.=playlist_html_single($playlist, "small");
 	}
 	
 	return $html;
 }
+
+function playlist_html_single($playlist, $mode)
+{
+	$tracks=track_get_all_from_playlist($playlist['id'], ($mode=="edit" ? TRUE : FALSE));
+	$playlist_name=($playlist['name']!=NULL ? html_safe($playlist['name']) : sprintf(_("Playlist %s"), $playlist['id']));
+	$move_songs="";
+
+	switch($mode)
+	{
+		case "small":
+			$html=html_tag("h3",	$playlist_name.
+									html_action_button(SITE_URL."/playlist/edit/".$playlist['id'], _("Edit")));
+			$html.=html_tag("div", $move_songs.html_table_from_array($tracks, NULL, array("id", "providerId", "url")), "scrollbox small");
+			break;
+		case "edit":
+			$html=html_tag("h3", sprintf(_("Editing %s"), $playlist_name));
+			$html.=html_form("post", array(	html_form_input("name_text", _("Name"), "text", "name", $playlist_name),
+											html_form_textarea("description_textarea", _("Description"), "description", $playlist['description'], _("Optional description")),
+											html_form_button("playlist_update_description", _("Save"), "success", NULL, FALSE, TRUE)));
+
+			$inputs=array();
+			$inputs[]=html_form_radio(_("With selected"), "action_radio", "action", array("move" => _("Move to"), "copy" => _("Copy to")));
+			$inputs[]=playlist_droplist("playlist", _("Playlist"));
+			$inputs[]=html_form_button("move_or_copy_songs", _("Do"), "submit", NULL, FALSe, FALSe);
+			$form_contents=html_row(1, count($inputs), $inputs).
+						html_tag("div", html_table_from_array($tracks, NULL, array("id", "providerId", "url")), "small");
+			$html.=html_form("post", array($form_contents), FALSE, TRUE);
+			break;
+		default:
+			$html=html_tag("h1", $playlist_name);
+			$html.=html_tag("div", $move_songs.html_table_from_array($tracks, NULL, array("id", "providerId", "url")), "small");
+			break;
+	}	
+	
+	return $html;
+}
+
 
 function playlist_get_users_playlists($user_id=NULL)
 {
@@ -75,10 +123,18 @@ function playlist_get_users_playlists($user_id=NULL)
 	return $db->get_from_array(PREFIX."playlist", array("user" => $user_id));
 }
 
-function playlist_get($playlist_id, $column)
+function playlist_get($playlist_id, $column="*")
 {
 	$db=new db_class();
+	if($column=="*")
+		return $db->get_from_array(PREFIX."playlist", array("id" => $playlist_id), TRUE);
 	return $db->get($column, PREFIX."playlist", $playlist_id);
+}
+function playlist_set($playlist_id, $column, $new_value)
+{
+	$db=new db_class();
+	if(login_get_user()==playlist_get($playlist_id, "user"))
+		return $db->set(PREFIX."playlist", $column, $new_value, $playlist_id);
 }
 
 function playlist_create_new($user_id)
@@ -91,6 +147,22 @@ function playlist_create_new($user_id)
 
 	add_error(sprintf(_("Could not create playlist. Error: %s"), $db->error));
 	return FALSE;
+}
+
+function playlist_move_to($from_playlist_id, $to_playlist_id, $track_id, $remove_from_old=TRUE)
+{
+	$user_id=login_get_user();
+	if($user_id==playlist_get($from_playlist_id,"user") && $user_id==playlist_get($to_playlist_id,"user"))
+	{
+		// Add track to new playlist
+		playlist_insert_track($to_playlist_id, $track_id);
+		
+		// Remove track from old playlist
+		if($remove_from_old)
+		{
+			playlist_remove_track($from_playlist_id, $track_id);
+		}
+	}
 }
 
 function playlist_extract_current_to($receiving_playlist_id)
@@ -130,20 +202,8 @@ function playlist_extract_current_to($receiving_playlist_id)
 				return FALSE;
 			
 			//make a connection to the playlist
-			//First, check if the traxk is already in playlist, if so just move on!
-			if(empty($db->get_from_array(PREFIX."playlist_track_reff", array("playlist"	=>	$playlist_id, "track"		=>	$id))))
-			{
-				$order=$db->select_first("SELECT MAX(`order`)+1 as next_order FROM ".PREFIX."playlist_track_reff WHERE playlist=".sql_safe($playlist_id));
-				if(!$db->insert_from_array(PREFIX."playlist_track_reff", array("playlist"	=>	$playlist_id,
-																			"track"		=>	$id,
-																			"order"		=>	($order['next_order']!=NULL ? $order['next_order'] : 1)
-																			)
-											)
-				) {
-					add_error(sprintf(_("Could not insert track into playlist. %s"), $db->error));
-					return FALSE;
-				}
-			}
+			if(!playlist_insert_track($playlist_id, $id))
+				return FALSE;
 			
 			//Remove the item from current playlist
 			$result=$api->_delete(array("1","song_requests","playlist",$track['_id']));
@@ -154,5 +214,33 @@ function playlist_extract_current_to($receiving_playlist_id)
 		}
 		$current_playlist=nightbot_get_playlist($user_id);
 	}
+}
+
+function playlist_remove_track($playlist_id, $track_id)
+{
+	$db=new db_class();
+	$db->delete_from_array(PREFIX."playlist_track_reff", array("playlist"	=>	$playlist_id,
+																	"track"		=>	$track_id)
+							);
+}
+
+function playlist_insert_track($playlist_id, $track_id)
+{
+	$db=new db_class();
+	//First, check if the traxk is already in playlist, if so just move on!
+	if(empty($db->get_from_array(PREFIX."playlist_track_reff", array("playlist"	=>	$playlist_id, "track"		=>	$track_id))))
+	{
+		$order=$db->select_first("SELECT MAX(`order`)+1 as next_order FROM ".PREFIX."playlist_track_reff WHERE playlist=".sql_safe($playlist_id));
+		if(!$db->insert_from_array(PREFIX."playlist_track_reff", array("playlist"	=>	$playlist_id,
+																	"track"		=>	$track_id,
+																	"order"		=>	($order['next_order']!=NULL ? $order['next_order'] : 1)
+																	)
+									)
+		) {
+			add_error(sprintf(_("Could not insert track into playlist. %s"), $db->error));
+			return FALSE;
+		}
+	}
+	return TRUE;
 }
 ?>
