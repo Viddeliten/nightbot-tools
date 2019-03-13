@@ -4,6 +4,16 @@
 
 // preprint($_POST);
 
+if(isset($_POST['merge_current']))
+{
+	playlist_add_to_current((int) $_POST['merge_current']);
+}
+if(isset($_POST['replace_current']))
+{
+	nightbot_clear_playlist();
+	playlist_add_to_current((int) $_POST['replace_current']);
+}
+
 if(isset($_POST['move_or_copy_songs']))
 {
 	if($_POST['playlist']=="NEW_PLAYLIST")

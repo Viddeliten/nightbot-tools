@@ -82,8 +82,11 @@ function playlist_html_single($playlist, $mode)
 	switch($mode)
 	{
 		case "small":
-			$html=html_tag("h3",	$playlist_name.
-									html_action_button(SITE_URL."/playlist/edit/".$playlist['id'], _("Edit")));
+			$html=html_tag("h3",	$playlist_name);
+			$buttons[0]=html_action_button(SITE_URL."/playlist/edit/".$playlist['id'], _("Edit"));
+			$buttons[1]=html_action_button(SITE_URL."/my_playlists", _("Replace current with this"), array("replace_current"	=> $playlist['id']), "warning");
+			$buttons[2]=html_action_button(SITE_URL."/my_playlists", _("Add this to current"), array("merge_current"	=> $playlist['id']), "success");
+			$html.=html_row(1, 3, $buttons);
 			$html.=html_tag("div", $move_songs.html_table_from_array($tracks, NULL, array("id", "providerId", "url")), "scrollbox small");
 			break;
 		case "edit":
@@ -165,6 +168,40 @@ function playlist_move_to($from_playlist_id, $to_playlist_id, $track_id, $remove
 	}
 }
 
+function playlist_add_to_current($playlist_id)
+{
+	$user_id=login_get_user();
+	$db=new db_class();
+	$api=new rest_api_integration("nightbot", TRUE);
+	
+	if(!$playlist_id)
+	{
+		add_error(_("No playlist"));
+		return FALSE;	
+	}
+	
+	//Check that current logged in user ownss this playlist
+	if($user_id!=playlist_get($playlist_id, "user"))
+	{
+		add_error(_("User mismatch"));
+		return FALSE;	
+	}
+	
+	//Get all tracks from playlist
+	$tracks=track_get_all_from_playlist($playlist_id);
+	if(!empty($tracks))
+	{
+		foreach($tracks as $track)
+		{
+			// 1/song_requests/playlist q
+			$result=$api->post(array("1","song_requests","playlist"), array("q" => $track['url']));
+			if(200!=$result->status)
+			{
+				add_error(sprintf(_("Track %s (%s) could not be added to current playlist. %s"), $track['title'], $track['url'], $result->message));
+			}
+		}
+	}
+}
 function playlist_extract_current_to($receiving_playlist_id)
 {
 	$user_id=login_get_user();
