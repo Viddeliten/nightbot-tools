@@ -28,6 +28,17 @@ function track_insert($array)
 	return FALSE;
 }
 
+function track_add_to_current_playlist($url, $title=NULL)
+{
+	$api=new rest_api_integration("nightbot", TRUE);
+
+	$result=$api->post(array("1","song_requests","playlist"), array("q" => $url));
+	if(200!=$result->status)
+	{
+		add_error(sprintf(_("Track %s (%s) could not be added to current playlist. %s"), $title, $url, $result->message));
+	}
+}
+
 function track_get($track_id, $column)
 {
 	$db=new db_class();

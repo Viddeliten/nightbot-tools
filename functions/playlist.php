@@ -29,9 +29,19 @@ function playlist_html_current()
 	// html_table_from_array($array, $headlines=NULL, $silent_columns=array(), $size_table=array(), $class=NULL)
 	$html.=html_tag("div", html_table_from_array($current_playlist, NULL, array("_id", "providerId", "url")), "scrollbox small");
 	
+	// Textarea to add songs to current playlist
+	$html.=html_tag("h3",_("Add songs"));
+	$html.=html_tag("p",_("Enter urls or song names, separated by line breaks."));
+
+	$inputs=array();
+	$inputs[]=html_form_textarea("songs_for_current_playlist_textarea", _("Songs"), "songs_for_current_playlist", "", NULL);
+	$inputs[]=html_form_button("add_songs_to_current", _("Add"), "submit", NULL, FALSe, TRUE);
+	$html.=html_form("post", $inputs, FALSE, TRUE);
+
 	// Droplist for extracting to new or existing playlist
 	$html.=html_tag("h3",_("Extract current playlist"));
 
+	$inputs=array();
 	$inputs[]=playlist_droplist("move_to", _("Move all songs to"));
 	$inputs[]=html_form_button("extract_current_nightbot_playlist", _("Extract"), "submit", NULL, FALSe, TRUE);
 	$html.=html_form("post", $inputs, FALSE, TRUE);
@@ -171,7 +181,7 @@ function playlist_move_to($from_playlist_id, $to_playlist_id, $track_id, $remove
 function playlist_add_to_current($playlist_id)
 {
 	$user_id=login_get_user();
-	$db=new db_class();
+	// $db=new db_class(); //Does not seem to be needed here
 	$api=new rest_api_integration("nightbot", TRUE);
 	
 	if(!$playlist_id)
@@ -193,15 +203,25 @@ function playlist_add_to_current($playlist_id)
 	{
 		foreach($tracks as $track)
 		{
-			// 1/song_requests/playlist q
-			$result=$api->post(array("1","song_requests","playlist"), array("q" => $track['url']));
-			if(200!=$result->status)
-			{
-				add_error(sprintf(_("Track %s (%s) could not be added to current playlist. %s"), $track['title'], $track['url'], $result->message));
-			}
+			track_add_to_current_playlist($track['url'], $track['title']);
 		}
 	}
 }
+
+function playlist_add_songs_to_current_from_text($text)
+{
+	$text=str_replace("\r","\n",$text);
+	$text=str_replace("\n\n","\n",$text);
+	
+	$songs=explode("\n", $text);
+	
+	foreach($songs as $song)
+	{
+		if($song!="")
+			track_add_to_current_playlist($song);
+	}
+}
+
 function playlist_extract_current_to($receiving_playlist_id)
 {
 	$user_id=login_get_user();

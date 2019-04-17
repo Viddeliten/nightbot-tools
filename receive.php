@@ -14,6 +14,11 @@ if(isset($_POST['replace_current']))
 	playlist_add_to_current((int) $_POST['replace_current']);
 }
 
+if(isset($_POST['songs_for_current_playlist']))
+{
+	playlist_add_songs_to_current_from_text($_POST['songs_for_current_playlist']);
+}
+
 if(isset($_POST['move_or_copy_songs']))
 {
 	if($_POST['playlist']=="NEW_PLAYLIST")
