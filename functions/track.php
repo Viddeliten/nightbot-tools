@@ -49,22 +49,51 @@ function track_get_all_from_playlist($playlist_id, $checkboxes=FALSE)
 		FROM ".PREFIX."playlist_track_reff reff
 		INNER JOIN ".TRACK_TABLE." ON ".TRACK_TABLE.".id=reff.track
 		WHERE reff.playlist=".sql_safe($playlist_id).";");
-	if($checkboxes)
+	$return=array();
+	foreach($result as $r)
 	{
-		$return=array();
-		foreach($result as $r)
+		$temp=array();
+		if($checkboxes)
 		{
-			$temp=array();
 			$temp["select"]=html_form_checkbox(NULL, "track_".$r['id']."_checkbox", "tracks[".$r['id']."]", NULL, FALSE, NULL, FALSE);
-			foreach($r as $key => $val)
-			{
-				$temp[$key]=$val;
-			}
-			$return[]=$temp;
 		}
-		return $return;
+		
+		foreach($r as $key => $val)
+		{
+			if(!strcmp($key,"title"))
+				$temp[$key]=html_link($r['url'], $val, NULL, "_blank");
+			else
+				$temp[$key]=$val;
+		}
+
+		$initial_parameters=array(	"play"		=>	0);
+		$switch_parameters=array(	"play"		=>	1,
+									"track_id"	=>	$r['id']);
+		$temp['play']=html_ajax_div_switcher($playlist_id."_play_track_".$r['id'], "track_display_play_frame", $initial_parameters, $switch_parameters, "play_div", TRUE);
+
+		$return[]=$temp;
 	}
-	return $result;
+	return $return;
+}
+
+function track_display_play_frame($play, $track_id=NULL)
+{
+	if(!$play)
+		return "[Play]";
+	
+	$r=track_get($track_id, NULL);
+	
+	if($r['provider']=="soundcloud")
+	{
+		return '<iframe width="120" height="50" scrolling="no" frameborder="no" src="https://w.soundcloud.com/player/?url='.$r['url'].'&color=%23ff5500&auto_play=true&hide_related=false&show_comments=false&show_user=false&show_reposts=false&show_teaser=false&visual=false"></iframe>';
+	}
+	else if($r['provider']=="youtube")
+	{
+		$url_parts=explode("/", $r['url']);
+		$url="https://www.youtube-nocookie.com/embed/".str_replace("watch?v=","", $url_parts[count($url_parts)-1]);
+		// https://www.youtube-nocookie.com/embed/
+		return '<iframe width="90" height="50" src="'.$url.'?autoplay=1" frameborder="0" allow="accelerometer; encrypted-media; gyroscope"></iframe>';
+	}
 }
 
 ?>
